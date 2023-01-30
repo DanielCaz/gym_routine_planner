@@ -4,6 +4,7 @@ class RoutineExcersize {
   int? reps;
   int? sets;
   int? minutes;
+  String? machine;
 
   RoutineExcersize({
     this.id,
@@ -11,5 +12,6 @@ class RoutineExcersize {
     this.reps,
     this.sets,
     this.minutes,
+    this.machine,
   });
 }
