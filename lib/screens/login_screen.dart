@@ -1,3 +1,4 @@
+import 'package:gym_routine_planner/Localization/global_strings.dart';
 import 'package:gym_routine_planner/screens/home_screen.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -65,12 +66,12 @@ class _LoginScreenState extends State<LoginScreen> {
             child:
                 Image.asset('assets/images/logo.png', width: 150, height: 150),
           ),
-          const Center(
-              child:
-                  Text('Gym Routine Planner', style: TextStyle(fontSize: 20))),
-          const Padding(
-            padding: EdgeInsets.all(8.0),
-            child: Text('Planea tus rutinas de gimnasio'),
+          Center(
+              child: Text(Languages.of(context)!.appName,
+                  style: const TextStyle(fontSize: 20))),
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Text(Languages.of(context)!.loginScreenSubtitle),
           ),
           Padding(
             padding: const EdgeInsets.all(8.0),
@@ -78,7 +79,7 @@ class _LoginScreenState extends State<LoginScreen> {
               onPressed: () {
                 signInWithGoogle();
               },
-              child: const Text('Iniciar sesión con Google'),
+              child: Text(Languages.of(context)!.loginScreenLoginButton),
             ),
           ),
         ],

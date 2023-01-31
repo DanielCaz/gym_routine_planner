@@ -1,7 +1,11 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:gym_routine_planner/classes/routine_day.dart';
-import 'package:gym_routine_planner/classes/routine_excersize.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:gym_routine_planner/Localization/locale_constant.dart';
+import 'package:gym_routine_planner/Localization/global_strings.dart';
+import 'package:gym_routine_planner/models/routine_excercise.dart';
 import 'package:gym_routine_planner/screens/login_screen.dart';
+import 'package:gym_routine_planner/models/language_data.dart';
+import 'package:gym_routine_planner/models/routine_day.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
@@ -20,20 +24,20 @@ class _HomeScreenState extends State<HomeScreen> {
 
   List<RoutineDay> routineDays = [];
   int viewingDayIndex = 0;
-  List<RoutineExcersize> viewingExcersizes = [];
+  List<RoutineExcercise> viewingexcercises = [];
 
   bool loading = true;
 
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-  final TextEditingController _excersizeNameController =
+  final TextEditingController _excerciseNameController =
       TextEditingController();
-  final TextEditingController _excersizeMinutesController =
+  final TextEditingController _excerciseMinutesController =
       TextEditingController();
-  final TextEditingController _excersizeSetsController =
+  final TextEditingController _excerciseSetsController =
       TextEditingController();
-  final TextEditingController _excersizeRepsController =
+  final TextEditingController _excerciseRepsController =
       TextEditingController();
-  final TextEditingController _excersizeMachineController =
+  final TextEditingController _excerciseMachineController =
       TextEditingController();
   final TextEditingController _routineDayNameController =
       TextEditingController();
@@ -47,74 +51,146 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   getRoutineDays() async {
-    final routineDaysRef = firestore
-        .collection('users')
-        .doc(auth.currentUser!.uid)
-        .collection('routines');
+    try {
+      final routineDaysRef = firestore
+          .collection('users')
+          .doc(auth.currentUser!.uid)
+          .collection('routines');
 
-    final querySnapshot = await routineDaysRef.orderBy('day').get();
+      final querySnapshot = await routineDaysRef.orderBy('day').get();
 
-    if (querySnapshot.docs.isEmpty) {
-      final List<RoutineDay> routineDays = [
-        RoutineDay(day: 'Lunes', name: 'Rutina', dayIndex: 0, excersizes: []),
-        RoutineDay(day: 'Martes', name: 'Rutina', dayIndex: 1, excersizes: []),
-        RoutineDay(
-            day: 'Miercoles', name: 'Rutina', dayIndex: 2, excersizes: []),
-        RoutineDay(day: 'Jueves', name: 'Rutina', dayIndex: 3, excersizes: []),
-        RoutineDay(day: 'Viernes', name: 'Rutina', dayIndex: 4, excersizes: []),
-        RoutineDay(day: 'Sabado', name: 'Rutina', dayIndex: 5, excersizes: []),
-        RoutineDay(day: 'Domingo', name: 'Rutina', dayIndex: 6, excersizes: []),
-      ];
+      if (querySnapshot.docs.isEmpty) {
+        if (!mounted) return;
+        final List<RoutineDay> routineDays = [
+          RoutineDay(
+              name: Languages.of(context)!.routine,
+              dayIndex: 0,
+              excercises: []),
+          RoutineDay(
+              name: Languages.of(context)!.routine,
+              dayIndex: 1,
+              excercises: []),
+          RoutineDay(
+              name: Languages.of(context)!.routine,
+              dayIndex: 2,
+              excercises: []),
+          RoutineDay(
+              name: Languages.of(context)!.routine,
+              dayIndex: 3,
+              excercises: []),
+          RoutineDay(
+              name: Languages.of(context)!.routine,
+              dayIndex: 4,
+              excercises: []),
+          RoutineDay(
+              name: Languages.of(context)!.routine,
+              dayIndex: 5,
+              excercises: []),
+          RoutineDay(
+              name: Languages.of(context)!.routine,
+              dayIndex: 6,
+              excercises: []),
+        ];
 
-      for (final routineDay in routineDays) {
-        await routineDaysRef.add({
-          'day': routineDay.day,
-          'name': routineDay.name,
-          'dayIndex': routineDay.dayIndex,
-          'excersizes': routineDay.excersizes,
+        for (final routineDay in routineDays) {
+          await routineDaysRef.add({
+            'name': routineDay.name,
+            'dayIndex': routineDay.dayIndex,
+            'excercises': routineDay.excercises,
+          });
+        }
+
+        setState(() {
+          this.routineDays = routineDays;
+          viewingexcercises = routineDays[0].excercises;
+          appBarTitle = Languages.of(context)!.monday;
+          loading = false;
+        });
+      } else {
+        final List<RoutineDay> routineDays = [];
+        for (final doc in querySnapshot.docs) {
+          final data = doc.data();
+
+          List<RoutineExcercise> excercises = [];
+          // Fixing typo in excercises
+          if (data['excercises'] == null) {
+            if (data['excersizes'] != null) {
+              await doc.reference.update({
+                'excercises': data['excersizes'],
+              });
+              await doc.reference.update({
+                'excersizes': FieldValue.delete(),
+              });
+              excercises = (data['excersizes'] as List<dynamic>)
+                  .map<RoutineExcercise>((excercise) {
+                return RoutineExcercise(
+                  name: excercise['name'],
+                  minutes: excercise['minutes'],
+                  sets: excercise['sets'],
+                  reps: excercise['reps'],
+                  machine: excercise['machine'],
+                );
+              }).toList();
+            }
+          } else {
+            if (data['excersizes'] != null) {
+              await doc.reference.update({
+                'excersizes': FieldValue.delete(),
+              });
+            }
+            excercises = (data['excercises'] as List<dynamic>)
+                .map<RoutineExcercise>((excercise) {
+              return RoutineExcercise(
+                name: excercise['name'],
+                minutes: excercise['minutes'],
+                sets: excercise['sets'],
+                reps: excercise['reps'],
+                machine: excercise['machine'],
+              );
+            }).toList();
+          }
+
+          routineDays.add(RoutineDay(
+            id: doc.id,
+            name: data['name'],
+            dayIndex: data['dayIndex'],
+            excercises: excercises,
+          ));
+        }
+
+        routineDays.sort((a, b) => a.dayIndex - b.dayIndex);
+
+        setState(() {
+          this.routineDays = routineDays;
+          viewingexcercises = routineDays[0].excercises;
+          appBarTitle = Languages.of(context)!.monday;
+          loading = false;
         });
       }
-
-      setState(() {
-        this.routineDays = routineDays;
-        viewingExcersizes = routineDays[0].excersizes;
-        appBarTitle = routineDays[0].name;
-        loading = false;
-      });
-    } else {
-      final List<RoutineDay> routineDays = [];
-      for (final doc in querySnapshot.docs) {
-        final data = doc.data();
-
-        routineDays.add(RoutineDay(
-          id: doc.id,
-          day: data['day'],
-          name: data['name'],
-          dayIndex: data['dayIndex'],
-          excersizes: (data['excersizes'] as List<dynamic>)
-              .map((excersize) => RoutineExcersize(
-                    name: excersize['name'],
-                    minutes: excersize['minutes'],
-                    sets: excersize['sets'],
-                    reps: excersize['reps'],
-                    machine: excersize['machine'],
-                  ))
-              .toList(),
-        ));
-      }
-
-      routineDays.sort((a, b) => a.dayIndex - b.dayIndex);
-
-      setState(() {
-        this.routineDays = routineDays;
-        viewingExcersizes = routineDays[0].excersizes;
-        appBarTitle = routineDays[0].name;
-        loading = false;
-      });
+    } catch (e) {
+      showDialog(
+        barrierDismissible: false,
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Error'),
+          content: Text(e.toString()),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (context) => const LoginScreen()),
+                );
+              },
+              child: const Text('Ok'),
+            ),
+          ],
+        ),
+      );
     }
   }
 
-  addRoutineExcersize(RoutineExcersize routineExcersize) async {
+  addRoutineExcercise(RoutineExcercise routineExcercise) async {
     setState(() {
       loading = true;
     });
@@ -124,24 +200,24 @@ class _HomeScreenState extends State<HomeScreen> {
         .collection('routines')
         .doc(routineDays[viewingDayIndex].id)
         .update({
-      'excersizes': FieldValue.arrayUnion([
+      'excercises': FieldValue.arrayUnion([
         {
-          'name': routineExcersize.name,
-          'minutes': routineExcersize.minutes,
-          'sets': routineExcersize.sets,
-          'reps': routineExcersize.reps,
-          'machine': routineExcersize.machine,
+          'name': routineExcercise.name,
+          'minutes': routineExcercise.minutes,
+          'sets': routineExcercise.sets,
+          'reps': routineExcercise.reps,
+          'machine': routineExcercise.machine,
         }
       ])
     });
 
     setState(() {
-      viewingExcersizes.add(routineExcersize);
+      viewingexcercises.add(routineExcercise);
       loading = false;
     });
   }
 
-  removeRoutineExcersize(RoutineExcersize routineExcersize) async {
+  removeRoutineExcercise(RoutineExcercise routineExcercise) async {
     setState(() {
       loading = true;
     });
@@ -151,24 +227,24 @@ class _HomeScreenState extends State<HomeScreen> {
         .collection('routines')
         .doc(routineDays[viewingDayIndex].id)
         .update({
-      'excersizes': FieldValue.arrayRemove([
+      'excercises': FieldValue.arrayRemove([
         {
-          'name': routineExcersize.name,
-          'minutes': routineExcersize.minutes,
-          'sets': routineExcersize.sets,
-          'reps': routineExcersize.reps,
-          'machine': routineExcersize.machine,
+          'name': routineExcercise.name,
+          'minutes': routineExcercise.minutes,
+          'sets': routineExcercise.sets,
+          'reps': routineExcercise.reps,
+          'machine': routineExcercise.machine,
         }
       ])
     });
 
     setState(() {
-      viewingExcersizes.remove(routineExcersize);
+      viewingexcercises.remove(routineExcercise);
       loading = false;
     });
   }
 
-  updateRoutineExcersize() async {
+  updateRoutineExcercise() async {
     setState(() {
       loading = true;
     });
@@ -178,13 +254,13 @@ class _HomeScreenState extends State<HomeScreen> {
         .collection('routines')
         .doc(routineDays[viewingDayIndex].id)
         .update({
-      'excersizes': viewingExcersizes.map((excersize) {
+      'excercises': viewingexcercises.map((excercise) {
         return {
-          'name': excersize.name,
-          'minutes': excersize.minutes,
-          'sets': excersize.sets,
-          'reps': excersize.reps,
-          'machine': excersize.machine,
+          'name': excercise.name,
+          'minutes': excercise.minutes,
+          'sets': excercise.sets,
+          'reps': excercise.reps,
+          'machine': excercise.machine,
         };
       }).toList(),
     });
@@ -193,46 +269,46 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
-  showAddRoutineExcersizeDialog() {
-    _excersizeNameController.clear();
-    _excersizeMinutesController.clear();
-    _excersizeSetsController.clear();
-    _excersizeRepsController.clear();
-    _excersizeMachineController.clear();
+  showAddRoutineExcerciseDialog() {
+    _excerciseNameController.clear();
+    _excerciseMinutesController.clear();
+    _excerciseSetsController.clear();
+    _excerciseRepsController.clear();
+    _excerciseMachineController.clear();
 
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('Agregar ejercicio'),
-          content: buildExcersizeRoutineDialog(),
+          title: Text(Languages.of(context)!.addExcercise),
+          content: buildexcerciseRoutineDialog(),
           actions: [
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop();
               },
-              child: const Text('Cancelar'),
+              child: Text(Languages.of(context)!.cancel),
             ),
             TextButton(
               onPressed: () {
                 if (_formKey.currentState!.validate()) {
-                  addRoutineExcersize(RoutineExcersize(
-                    name: _excersizeNameController.text,
-                    minutes: _excersizeMinutesController.text.isEmpty
+                  addRoutineExcercise(RoutineExcercise(
+                    name: _excerciseNameController.text,
+                    minutes: _excerciseMinutesController.text.isEmpty
                         ? null
-                        : int.parse(_excersizeMinutesController.text),
-                    sets: _excersizeSetsController.text.isEmpty
+                        : int.parse(_excerciseMinutesController.text),
+                    sets: _excerciseSetsController.text.isEmpty
                         ? null
-                        : int.parse(_excersizeSetsController.text),
-                    reps: _excersizeRepsController.text.isEmpty
+                        : int.parse(_excerciseSetsController.text),
+                    reps: _excerciseRepsController.text.isEmpty
                         ? null
-                        : int.parse(_excersizeRepsController.text),
-                    machine: _excersizeMachineController.text,
+                        : int.parse(_excerciseRepsController.text),
+                    machine: _excerciseMachineController.text,
                   ));
                   Navigator.of(context).pop();
                 }
               },
-              child: const Text('Agregar'),
+              child: Text(Languages.of(context)!.save),
             ),
           ],
         );
@@ -240,48 +316,48 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  showEditRoutineExcersizeDialog(RoutineExcersize routineExcersize) {
-    _excersizeNameController.text = routineExcersize.name;
-    _excersizeMinutesController.text =
-        routineExcersize.minutes?.toString() ?? '';
-    _excersizeSetsController.text = routineExcersize.sets?.toString() ?? '';
-    _excersizeRepsController.text = routineExcersize.reps?.toString() ?? '';
-    _excersizeMachineController.text = routineExcersize.machine ?? '';
+  showEditRoutineExcerciseDialog(RoutineExcercise routineExcercise) {
+    _excerciseNameController.text = routineExcercise.name;
+    _excerciseMinutesController.text =
+        routineExcercise.minutes?.toString() ?? '';
+    _excerciseSetsController.text = routineExcercise.sets?.toString() ?? '';
+    _excerciseRepsController.text = routineExcercise.reps?.toString() ?? '';
+    _excerciseMachineController.text = routineExcercise.machine ?? '';
 
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('Editar ejercicio'),
-          content: buildExcersizeRoutineDialog(),
+          title: Text(Languages.of(context)!.editExcercise),
+          content: buildexcerciseRoutineDialog(),
           actions: [
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop();
               },
-              child: const Text('Cancelar'),
+              child: Text(Languages.of(context)!.cancel),
             ),
             TextButton(
               onPressed: () {
                 if (_formKey.currentState!.validate()) {
-                  routineExcersize.name = _excersizeNameController.text;
-                  routineExcersize.minutes =
-                      _excersizeMinutesController.text.isEmpty
+                  routineExcercise.name = _excerciseNameController.text;
+                  routineExcercise.minutes =
+                      _excerciseMinutesController.text.isEmpty
                           ? null
-                          : int.parse(_excersizeMinutesController.text);
-                  routineExcersize.sets = _excersizeSetsController.text.isEmpty
+                          : int.parse(_excerciseMinutesController.text);
+                  routineExcercise.sets = _excerciseSetsController.text.isEmpty
                       ? null
-                      : int.parse(_excersizeSetsController.text);
-                  routineExcersize.reps = _excersizeRepsController.text.isEmpty
+                      : int.parse(_excerciseSetsController.text);
+                  routineExcercise.reps = _excerciseRepsController.text.isEmpty
                       ? null
-                      : int.parse(_excersizeRepsController.text);
-                  routineExcersize.machine = _excersizeMachineController.text;
+                      : int.parse(_excerciseRepsController.text);
+                  routineExcercise.machine = _excerciseMachineController.text;
 
-                  updateRoutineExcersize();
+                  updateRoutineExcercise();
                   Navigator.of(context).pop();
                 }
               },
-              child: const Text('Editar'),
+              child: Text(Languages.of(context)!.save),
             ),
           ],
         );
@@ -289,7 +365,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Form buildExcersizeRoutineDialog() {
+  Form buildexcerciseRoutineDialog() {
     return Form(
       key: _formKey,
       child: SingleChildScrollView(
@@ -297,27 +373,27 @@ class _HomeScreenState extends State<HomeScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             TextFormField(
-              controller: _excersizeNameController,
-              decoration: const InputDecoration(
-                labelText: 'Nombre*',
+              controller: _excerciseNameController,
+              decoration: InputDecoration(
+                labelText: Languages.of(context)!.nameField,
               ),
               validator: (value) {
                 if (value == null || value.isEmpty) {
-                  return 'Por favor ingrese un nombre';
+                  return Languages.of(context)!.nameErrorMessage;
                 }
                 return null;
               },
             ),
             TextFormField(
-              controller: _excersizeMinutesController,
-              decoration: const InputDecoration(
-                labelText: 'Minutos',
+              controller: _excerciseMinutesController,
+              decoration: InputDecoration(
+                labelText: Languages.of(context)!.minutesField,
               ),
               validator: (value) {
                 if (value != null && value.isNotEmpty) {
-                  if (_excersizeSetsController.text.isNotEmpty ||
-                      _excersizeRepsController.text.isNotEmpty) {
-                    return 'No puede ingresar minutos y sets/reps a la vez';
+                  if (_excerciseSetsController.text.isNotEmpty ||
+                      _excerciseRepsController.text.isNotEmpty) {
+                    return Languages.of(context)!.minutesErrorMessage;
                   }
                 }
                 return null;
@@ -325,18 +401,18 @@ class _HomeScreenState extends State<HomeScreen> {
               keyboardType: TextInputType.number,
             ),
             TextFormField(
-              controller: _excersizeSetsController,
-              decoration: const InputDecoration(
-                labelText: 'Sets',
+              controller: _excerciseSetsController,
+              decoration: InputDecoration(
+                labelText: Languages.of(context)!.setsField,
               ),
               validator: (value) {
                 if (value != null && value.isNotEmpty) {
-                  if (_excersizeMinutesController.text.isNotEmpty) {
-                    return 'No puede ingresar minutos y sets/reps a la vez';
+                  if (_excerciseMinutesController.text.isNotEmpty) {
+                    return Languages.of(context)!.setsErrorMessageMins;
                   }
                 } else {
-                  if (_excersizeRepsController.text.isNotEmpty) {
-                    return 'Le falta ingresar sets para sus reps';
+                  if (_excerciseRepsController.text.isNotEmpty) {
+                    return Languages.of(context)!.setsErrorMessageReps;
                   }
                 }
                 return null;
@@ -344,18 +420,18 @@ class _HomeScreenState extends State<HomeScreen> {
               keyboardType: TextInputType.number,
             ),
             TextFormField(
-              controller: _excersizeRepsController,
-              decoration: const InputDecoration(
-                labelText: 'Reps',
+              controller: _excerciseRepsController,
+              decoration: InputDecoration(
+                labelText: Languages.of(context)!.repsField,
               ),
               validator: (value) {
                 if (value != null && value.isNotEmpty) {
-                  if (_excersizeMinutesController.text.isNotEmpty) {
-                    return 'No puede ingresar minutos y sets/reps a la vez';
+                  if (_excerciseMinutesController.text.isNotEmpty) {
+                    return Languages.of(context)!.repsErrorMessageMins;
                   }
                 } else {
-                  if (_excersizeSetsController.text.isNotEmpty) {
-                    return 'Le falta ingresar reps para sus sets';
+                  if (_excerciseSetsController.text.isNotEmpty) {
+                    return Languages.of(context)!.repsErrorMessageSets;
                   }
                 }
                 return null;
@@ -363,9 +439,9 @@ class _HomeScreenState extends State<HomeScreen> {
               keyboardType: TextInputType.number,
             ),
             TextFormField(
-              controller: _excersizeMachineController,
-              decoration: const InputDecoration(
-                labelText: 'Máquina',
+              controller: _excerciseMachineController,
+              decoration: InputDecoration(
+                labelText: Languages.of(context)!.machineField,
               ),
             ),
           ],
@@ -397,17 +473,17 @@ class _HomeScreenState extends State<HomeScreen> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('Editar nombre de la rutina'),
+          title: Text(Languages.of(context)!.editRoutineName),
           content: Form(
               key: _formKey,
               child: TextFormField(
                 controller: _routineDayNameController,
-                decoration: const InputDecoration(
-                  labelText: 'Nombre',
+                decoration: InputDecoration(
+                  labelText: Languages.of(context)!.nameField,
                 ),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Por favor ingrese un nombre';
+                    return Languages.of(context)!.nameErrorMessage;
                   }
                   return null;
                 },
@@ -417,7 +493,7 @@ class _HomeScreenState extends State<HomeScreen> {
               onPressed: () {
                 Navigator.of(context).pop();
               },
-              child: const Text('Cancelar'),
+              child: Text(Languages.of(context)!.cancel),
             ),
             TextButton(
               onPressed: () {
@@ -426,7 +502,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   Navigator.of(context).pop();
                 }
               },
-              child: const Text('Editar'),
+              child: Text(Languages.of(context)!.save),
             ),
           ],
         );
@@ -434,30 +510,56 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  @override
-  void initState() {
-    super.initState();
-    try {
-      getRoutineDays();
-    } catch (e) {
-      showDialog(
+  showChangeLanguageDialog() async {
+    if (!mounted) return;
+
+    showDialog(
         context: context,
         builder: (context) {
           return AlertDialog(
-            title: const Text('Error'),
-            content: Text(e.toString()),
+            title: Text(Languages.of(context)!.changeLanguage),
+            content: DropdownButton<LanguageData>(
+              iconSize: 30,
+              hint: Text(Languages.of(context)!.changeLanguage),
+              onChanged: (language) {
+                changeLanguage(context, language!.languageCode);
+                Navigator.of(context).pop();
+                Navigator.of(context).pop();
+              },
+              items: LanguageData.languageList()
+                  .map<DropdownMenuItem<LanguageData>>(
+                    (e) => DropdownMenuItem<LanguageData>(
+                      value: e,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        children: <Widget>[
+                          Text(
+                            e.flag,
+                            style: const TextStyle(fontSize: 30),
+                          ),
+                          Text(e.name)
+                        ],
+                      ),
+                    ),
+                  )
+                  .toList(),
+            ),
             actions: [
               TextButton(
                 onPressed: () {
                   Navigator.of(context).pop();
                 },
-                child: const Text('Aceptar'),
+                child: Text(Languages.of(context)!.cancel),
               ),
             ],
           );
-        },
-      );
-    }
+        });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    getRoutineDays();
   }
 
   @override
@@ -473,7 +575,15 @@ class _HomeScreenState extends State<HomeScreen> {
                   onPressed: () {
                     signOut();
                   },
-                  child: const Text('Cerrar sesión'),
+                  child: Text(Languages.of(context)!.logout),
+                ),
+              ),
+              PopupMenuItem(
+                child: TextButton(
+                  child: Text(Languages.of(context)!.changeLanguage),
+                  onPressed: () {
+                    showChangeLanguageDialog();
+                  },
                 ),
               ),
             ];
@@ -506,40 +616,40 @@ class _HomeScreenState extends State<HomeScreen> {
                     ],
                   ),
                 ),
-                viewingExcersizes.isNotEmpty
+                viewingexcercises.isNotEmpty
                     ? Expanded(
                         child: ListView.builder(
-                          itemCount: viewingExcersizes.length,
+                          itemCount: viewingexcercises.length,
                           itemBuilder: (context, index) {
-                            final excersize = viewingExcersizes[index];
+                            final excercise = viewingexcercises[index];
                             return Padding(
                               padding: const EdgeInsets.all(8.0),
                               child: Card(
                                 elevation: 2,
                                 child: ListTile(
-                                  title: Text(excersize.name),
-                                  subtitle: Text(excersize.minutes == null
-                                      ? '${excersize.sets} sets x ${excersize.reps} reps${excersize.machine?.isNotEmpty ?? false ? '\nEn ${excersize.machine}' : ''}'
-                                      : '${excersize.minutes} minutos${excersize.machine?.isNotEmpty ?? false ? '\nEn ${excersize.machine}' : ''}'),
+                                  title: Text(excercise.name),
+                                  subtitle: Text(excercise.minutes == null
+                                      ? '${excercise.sets} sets x ${excercise.reps} reps${excercise.machine?.isNotEmpty ?? false ? '\n${Languages.of(context)!.on} ${excercise.machine}' : ''}'
+                                      : '${excercise.minutes} ${Languages.of(context)!.minutes}${excercise.machine?.isNotEmpty ?? false ? '\n${Languages.of(context)!.on} ${excercise.machine}' : ''}'),
                                   trailing: IconButton(
                                     onPressed: () {
-                                      removeRoutineExcersize(excersize);
+                                      removeRoutineExcercise(excercise);
                                     },
                                     icon: const Icon(Icons.delete),
                                   ),
                                   onLongPress: () {
-                                    showEditRoutineExcersizeDialog(excersize);
+                                    showEditRoutineExcerciseDialog(excercise);
                                   },
                                   isThreeLine:
-                                      excersize.machine?.isNotEmpty ?? false,
+                                      excercise.machine?.isNotEmpty ?? false,
                                 ),
                               ),
                             );
                           },
                         ),
                       )
-                    : const Center(
-                        child: Text('No hay ejercicios en este día'),
+                    : Center(
+                        child: Text(Languages.of(context)!.noExcercisesText),
                       )
               ],
             )
@@ -549,7 +659,7 @@ class _HomeScreenState extends State<HomeScreen> {
       floatingActionButton: !loading
           ? FloatingActionButton(
               onPressed: () {
-                showAddRoutineExcersizeDialog();
+                showAddRoutineExcerciseDialog();
               },
               child: const Icon(Icons.add),
             )
@@ -558,32 +668,96 @@ class _HomeScreenState extends State<HomeScreen> {
           child: ListView(
         padding: EdgeInsets.zero,
         children: [
-          const DrawerHeader(
-            decoration: BoxDecoration(
+          DrawerHeader(
+            decoration: const BoxDecoration(
               color: Colors.blue,
             ),
             child: Text(
-              'Rutinas',
-              style: TextStyle(
+              Languages.of(context)!.routines,
+              style: const TextStyle(
                 color: Colors.white,
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
               ),
             ),
           ),
-          ...routineDays.map((routineDay) {
-            return ListTile(
-              title: Text(routineDay.day),
-              onTap: () {
-                setState(() {
-                  viewingDayIndex = routineDay.dayIndex;
-                  viewingExcersizes = routineDay.excersizes;
-                  appBarTitle = routineDay.day;
-                });
-                Navigator.of(context).pop();
-              },
-            );
-          }).toList(),
+          ListTile(
+            title: Text(Languages.of(context)!.monday),
+            onTap: () {
+              setState(() {
+                viewingDayIndex = 0;
+                viewingexcercises = routineDays[viewingDayIndex].excercises;
+                appBarTitle = Languages.of(context)!.monday;
+              });
+              Navigator.of(context).pop();
+            },
+          ),
+          ListTile(
+            title: Text(Languages.of(context)!.tuesday),
+            onTap: () {
+              setState(() {
+                viewingDayIndex = 1;
+                viewingexcercises = routineDays[viewingDayIndex].excercises;
+                appBarTitle = Languages.of(context)!.tuesday;
+              });
+              Navigator.of(context).pop();
+            },
+          ),
+          ListTile(
+            title: Text(Languages.of(context)!.wednesday),
+            onTap: () {
+              setState(() {
+                viewingDayIndex = 2;
+                viewingexcercises = routineDays[viewingDayIndex].excercises;
+                appBarTitle = Languages.of(context)!.wednesday;
+              });
+              Navigator.of(context).pop();
+            },
+          ),
+          ListTile(
+            title: Text(Languages.of(context)!.thursday),
+            onTap: () {
+              setState(() {
+                viewingDayIndex = 3;
+                viewingexcercises = routineDays[viewingDayIndex].excercises;
+                appBarTitle = Languages.of(context)!.thursday;
+              });
+              Navigator.of(context).pop();
+            },
+          ),
+          ListTile(
+            title: Text(Languages.of(context)!.friday),
+            onTap: () {
+              setState(() {
+                viewingDayIndex = 4;
+                viewingexcercises = routineDays[viewingDayIndex].excercises;
+                appBarTitle = Languages.of(context)!.friday;
+              });
+              Navigator.of(context).pop();
+            },
+          ),
+          ListTile(
+            title: Text(Languages.of(context)!.saturday),
+            onTap: () {
+              setState(() {
+                viewingDayIndex = 5;
+                viewingexcercises = routineDays[viewingDayIndex].excercises;
+                appBarTitle = Languages.of(context)!.saturday;
+              });
+              Navigator.of(context).pop();
+            },
+          ),
+          ListTile(
+            title: Text(Languages.of(context)!.sunday),
+            onTap: () {
+              setState(() {
+                viewingDayIndex = 6;
+                viewingexcercises = routineDays[viewingDayIndex].excercises;
+                appBarTitle = Languages.of(context)!.sunday;
+              });
+              Navigator.of(context).pop();
+            },
+          ),
         ],
       )),
     );

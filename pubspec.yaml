@@ -11,12 +11,16 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
 
   cupertino_icons: ^1.0.2
   firebase_core: ^2.4.1
   firebase_auth: ^4.2.5
   google_sign_in: ^5.4.4
   cloud_firestore: ^4.3.1
+  shared_preferences: ^2.0.17
+  firebase_messaging: ^14.2.1
 
 dev_dependencies:
   flutter_test:
