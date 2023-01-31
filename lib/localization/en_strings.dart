@@ -110,4 +110,10 @@ class LanguageEN extends Languages {
 
   @override
   String get spanish => "Spanish";
+
+  @override
+  String get darkMode => "Dark Mode";
+
+  @override
+  String get lightMode => "Light Mode";
 }

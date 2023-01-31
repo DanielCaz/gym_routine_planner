@@ -46,4 +46,6 @@ abstract class Languages {
   String get changeLanguage;
   String get english;
   String get spanish;
+  String get darkMode;
+  String get lightMode;
 }

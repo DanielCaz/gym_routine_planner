@@ -1,5 +1,21 @@
 # Changelog
 
+## [1.2]
+
+### Added
+
+- Support for dark mode.
+
+### Changed
+
+- The routine name option is now part of the popup menu button.
+- Exercises are now deleted by swiping them to the left.
+- The `delete` button for exercises is now an `edit` button.
+
+### Removed
+
+- None.
+
 ## [1.1]
 
 ### Added

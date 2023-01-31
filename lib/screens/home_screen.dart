@@ -1,4 +1,3 @@
-import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:gym_routine_planner/Localization/locale_constant.dart';
 import 'package:gym_routine_planner/Localization/global_strings.dart';
 import 'package:gym_routine_planner/models/routine_excercise.dart';
@@ -111,18 +110,13 @@ class _HomeScreenState extends State<HomeScreen> {
         for (final doc in querySnapshot.docs) {
           final data = doc.data();
 
-          List<RoutineExcercise> excercises = [];
-          // Fixing typo in excercises
-          if (data['excercises'] == null) {
-            if (data['excersizes'] != null) {
-              await doc.reference.update({
-                'excercises': data['excersizes'],
-              });
-              await doc.reference.update({
-                'excersizes': FieldValue.delete(),
-              });
-              excercises = (data['excersizes'] as List<dynamic>)
-                  .map<RoutineExcercise>((excercise) {
+          routineDays.add(RoutineDay(
+            id: doc.id,
+            name: data['name'],
+            dayIndex: data['dayIndex'],
+            excercises:
+                (data['excercises'] as List<dynamic>).map<RoutineExcercise>(
+              (excercise) {
                 return RoutineExcercise(
                   name: excercise['name'],
                   minutes: excercise['minutes'],
@@ -130,31 +124,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   reps: excercise['reps'],
                   machine: excercise['machine'],
                 );
-              }).toList();
-            }
-          } else {
-            if (data['excersizes'] != null) {
-              await doc.reference.update({
-                'excersizes': FieldValue.delete(),
-              });
-            }
-            excercises = (data['excercises'] as List<dynamic>)
-                .map<RoutineExcercise>((excercise) {
-              return RoutineExcercise(
-                name: excercise['name'],
-                minutes: excercise['minutes'],
-                sets: excercise['sets'],
-                reps: excercise['reps'],
-                machine: excercise['machine'],
-              );
-            }).toList();
-          }
-
-          routineDays.add(RoutineDay(
-            id: doc.id,
-            name: data['name'],
-            dayIndex: data['dayIndex'],
-            excercises: excercises,
+              },
+            ).toList(),
           ));
         }
 
@@ -573,9 +544,9 @@ class _HomeScreenState extends State<HomeScreen> {
               PopupMenuItem(
                 child: TextButton(
                   onPressed: () {
-                    signOut();
+                    showEditRoutineDayNameDialog();
                   },
-                  child: Text(Languages.of(context)!.logout),
+                  child: Text(Languages.of(context)!.editRoutineName),
                 ),
               ),
               PopupMenuItem(
@@ -584,6 +555,14 @@ class _HomeScreenState extends State<HomeScreen> {
                   onPressed: () {
                     showChangeLanguageDialog();
                   },
+                ),
+              ),
+              PopupMenuItem(
+                child: TextButton(
+                  onPressed: () {
+                    signOut();
+                  },
+                  child: Text(Languages.of(context)!.logout),
                 ),
               ),
             ];
@@ -595,25 +574,13 @@ class _HomeScreenState extends State<HomeScreen> {
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Padding(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 32.0, vertical: 8.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        routineDays[viewingDayIndex].name,
-                        style: const TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      IconButton(
-                        onPressed: () {
-                          showEditRoutineDayNameDialog();
-                        },
-                        icon: const Icon(Icons.edit),
-                      ),
-                    ],
+                  padding: const EdgeInsets.symmetric(vertical: 16.0),
+                  child: Text(
+                    routineDays[viewingDayIndex].name,
+                    style: const TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
                 viewingexcercises.isNotEmpty
@@ -622,26 +589,46 @@ class _HomeScreenState extends State<HomeScreen> {
                           itemCount: viewingexcercises.length,
                           itemBuilder: (context, index) {
                             final excercise = viewingexcercises[index];
-                            return Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: Card(
-                                elevation: 2,
-                                child: ListTile(
-                                  title: Text(excercise.name),
-                                  subtitle: Text(excercise.minutes == null
-                                      ? '${excercise.sets} sets x ${excercise.reps} reps${excercise.machine?.isNotEmpty ?? false ? '\n${Languages.of(context)!.on} ${excercise.machine}' : ''}'
-                                      : '${excercise.minutes} ${Languages.of(context)!.minutes}${excercise.machine?.isNotEmpty ?? false ? '\n${Languages.of(context)!.on} ${excercise.machine}' : ''}'),
-                                  trailing: IconButton(
-                                    onPressed: () {
-                                      removeRoutineExcercise(excercise);
-                                    },
-                                    icon: const Icon(Icons.delete),
+                            return Dismissible(
+                              key: UniqueKey(),
+                              direction: DismissDirection.endToStart,
+                              onDismissed: (direction) {
+                                removeRoutineExcercise(excercise);
+                              },
+                              background: Container(
+                                color: Colors.red,
+                                child: const Align(
+                                  alignment: Alignment.centerRight,
+                                  child: Padding(
+                                    padding: EdgeInsets.only(right: 16.0),
+                                    child: Icon(
+                                      Icons.delete,
+                                      color: Colors.white,
+                                    ),
                                   ),
-                                  onLongPress: () {
-                                    showEditRoutineExcerciseDialog(excercise);
-                                  },
-                                  isThreeLine:
-                                      excercise.machine?.isNotEmpty ?? false,
+                                ),
+                              ),
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 16.0, vertical: 4.0),
+                                child: Card(
+                                  elevation: 2,
+                                  child: ListTile(
+                                    title: Text(excercise.name),
+                                    subtitle: Text(excercise.minutes == null
+                                        ? '${excercise.sets} sets x ${excercise.reps} reps${excercise.machine?.isNotEmpty ?? false ? '\n${Languages.of(context)!.on} ${excercise.machine}' : ''}'
+                                        : '${excercise.minutes} ${Languages.of(context)!.minutes}${excercise.machine?.isNotEmpty ?? false ? '\n${Languages.of(context)!.on} ${excercise.machine}' : ''}'),
+                                    trailing: IconButton(
+                                      onPressed: () {
+                                        showEditRoutineExcerciseDialog(
+                                          excercise,
+                                        );
+                                      },
+                                      icon: const Icon(Icons.edit),
+                                    ),
+                                    isThreeLine:
+                                        excercise.machine?.isNotEmpty ?? false,
+                                  ),
                                 ),
                               ),
                             );

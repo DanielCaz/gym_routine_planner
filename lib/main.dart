@@ -48,30 +48,31 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-        title: 'Gym Routine Planner',
-        theme: ThemeData(
-          primarySwatch: Colors.blue,
-        ),
-        home: const LoginScreen(),
-        locale: _locale,
-        supportedLocales: const [
-          Locale('en', ''),
-          Locale('es', ''),
-        ],
-        localizationsDelegates: const [
-          AppLocalizationsDelegate(),
-          GlobalMaterialLocalizations.delegate,
-          GlobalWidgetsLocalizations.delegate,
-          GlobalCupertinoLocalizations.delegate,
-        ],
-        localeResolutionCallback: (locale, supportedLocales) {
-          for (var supportedLocale in supportedLocales) {
-            if (supportedLocale.languageCode == locale?.languageCode &&
-                supportedLocale.countryCode == locale?.countryCode) {
-              return supportedLocale;
-            }
+      title: 'Gym Routine Planner',
+      themeMode: ThemeMode.system,
+      theme: ThemeData.light(),
+      darkTheme: ThemeData.dark(),
+      home: const LoginScreen(),
+      locale: _locale,
+      supportedLocales: const [
+        Locale('en', ''),
+        Locale('es', ''),
+      ],
+      localizationsDelegates: const [
+        AppLocalizationsDelegate(),
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      localeResolutionCallback: (locale, supportedLocales) {
+        for (var supportedLocale in supportedLocales) {
+          if (supportedLocale.languageCode == locale?.languageCode &&
+              supportedLocale.countryCode == locale?.countryCode) {
+            return supportedLocale;
           }
-          return supportedLocales.first;
-        });
+        }
+        return supportedLocales.first;
+      },
+    );
   }
 }
