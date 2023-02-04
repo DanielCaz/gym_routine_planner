@@ -5,14 +5,11 @@ abstract class Languages {
     return Localizations.of<Languages>(context, Languages);
   }
 
-  // General
   String get appName;
 
-  // Login Screen
   String get loginScreenSubtitle;
   String get loginScreenLoginButton;
 
-  // Home Screen
   String get monday;
   String get tuesday;
   String get wednesday;
@@ -21,10 +18,10 @@ abstract class Languages {
   String get saturday;
   String get sunday;
   String get routine;
-  String get addExcercise;
+  String get addExercise;
   String get cancel;
   String get save;
-  String get editExcercise;
+  String get editExercise;
   String get nameField;
   String get nameErrorMessage;
   String get minutesField;
@@ -41,11 +38,12 @@ abstract class Languages {
   String get logout;
   String get minutes;
   String get on;
-  String get noExcercisesText;
+  String get noExercisesText;
   String get routines;
   String get changeLanguage;
   String get english;
   String get spanish;
-  String get darkMode;
-  String get lightMode;
+  String get exercises;
+  String get pleaseSelectExercise;
+  String get refresh;
 }

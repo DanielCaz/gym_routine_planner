@@ -1,5 +1,21 @@
 # Changelog
 
+## [1.3]
+
+### Added
+
+- Exercises screen for adding, editing and deleting exercises.
+- `Refresh data` button for refreshing the routine data.
+
+### Changed
+
+- Exercises are now added to routine from exercises created in the exercises screen.
+- App now opens with the day of the week selected.
+
+### Removed
+
+- None.
+
 ## [1.2]
 
 ### Added

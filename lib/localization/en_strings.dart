@@ -2,7 +2,7 @@ import 'global_strings.dart';
 
 class LanguageEN extends Languages {
   @override
-  String get addExcercise => "Add Excercise";
+  String get addExercise => "Add Exercise";
 
   @override
   String get appName => "Gym Routine Planner";
@@ -11,7 +11,7 @@ class LanguageEN extends Languages {
   String get cancel => "Cancel";
 
   @override
-  String get editExcercise => "Edit Excercise";
+  String get editExercise => "Edit Exercise";
 
   @override
   String get editRoutineName => "Edit Routine Name";
@@ -100,7 +100,7 @@ class LanguageEN extends Languages {
   String get wednesday => "Wednesday";
 
   @override
-  String get noExcercisesText => "No excercises added yet";
+  String get noExercisesText => "No exercises added yet";
 
   @override
   String get changeLanguage => "Change Language";
@@ -112,8 +112,11 @@ class LanguageEN extends Languages {
   String get spanish => "Spanish";
 
   @override
-  String get darkMode => "Dark Mode";
+  String get exercises => "Exercises";
 
   @override
-  String get lightMode => "Light Mode";
+  String get pleaseSelectExercise => "Please select an exercise";
+
+  @override
+  String get refresh => "Refresh";
 }

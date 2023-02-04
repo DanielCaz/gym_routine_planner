@@ -1,4 +1,4 @@
-class RoutineExcercise {
+class RoutineExercise {
   final String? id;
   String name;
   int? reps;
@@ -6,7 +6,7 @@ class RoutineExcercise {
   int? minutes;
   String? machine;
 
-  RoutineExcercise({
+  RoutineExercise({
     this.id,
     required this.name,
     this.reps,

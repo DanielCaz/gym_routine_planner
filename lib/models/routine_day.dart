@@ -1,15 +1,15 @@
-import 'package:gym_routine_planner/models/routine_excercise.dart';
+import 'package:gym_routine_planner/models/routine_exercise.dart';
 
 class RoutineDay {
   final String? id;
   String name;
   final int dayIndex;
-  final List<RoutineExcercise> excercises;
+  final List<RoutineExercise> exercises;
 
   RoutineDay({
     this.id,
     required this.name,
     required this.dayIndex,
-    required this.excercises,
+    required this.exercises,
   });
 }

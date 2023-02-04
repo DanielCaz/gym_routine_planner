@@ -2,7 +2,7 @@ import 'global_strings.dart';
 
 class LanguageES extends Languages {
   @override
-  String get addExcercise => "Añadir Ejercicio";
+  String get addExercise => "Añadir Ejercicio";
 
   @override
   String get appName => "Planificador de Rutinas de Gimnasio";
@@ -11,7 +11,7 @@ class LanguageES extends Languages {
   String get cancel => "Cancelar";
 
   @override
-  String get editExcercise => "Editar Ejercicio";
+  String get editExercise => "Editar Ejercicio";
 
   @override
   String get editRoutineName => "Editar Nombre de Rutina";
@@ -101,7 +101,7 @@ class LanguageES extends Languages {
   String get wednesday => "Miércoles";
 
   @override
-  String get noExcercisesText => "No hay ejercicios en esta rutina";
+  String get noExercisesText => "No hay ejercicios en esta rutina";
 
   @override
   String get changeLanguage => "Cambiar idioma";
@@ -113,8 +113,11 @@ class LanguageES extends Languages {
   String get spanish => "Español";
 
   @override
-  String get darkMode => "Modo oscuro";
+  String get exercises => "Ejercicios";
 
   @override
-  String get lightMode => "Modo claro";
+  String get pleaseSelectExercise => "Por favor, selecciona un ejercicio";
+
+  @override
+  String get refresh => "Refrescar";
 }
